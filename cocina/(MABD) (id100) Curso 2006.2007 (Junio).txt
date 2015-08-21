@@ -1,0 +1,67 @@
+
+-- ******** JUNIO DE 2007 **********
+
+1) 
+
+INSERT INTO articulo_objtab VALUES(
+	articulo_interno(5,
+			'Evolucion del SIDA en Africa',
+			'Nature',
+			2,
+			3,
+			2007,
+			lista(
+				(SELECT a.cod 
+				FROM autor_objtab a
+				WHERE a.nombre = 'Luis'),
+				(SELECT a.cod
+				FROM autor_objtab a
+				WHERE a.nombre = 'Fred') 
+				),
+			lista(
+				(SELECT arti.art
+				FROM articulo_objtab arti
+				WHERE arti.titulo = 'Que mala es la gripe')
+			),
+			lista(
+				(SELECT v.cod
+				FROM virus_objtab v
+				WHERE v.nombre = 'SIDA')
+			),
+			(select ref(i) from instituto_objtab i where i.nombre='CCIA'), 
+			(select ref(c) from contrato_objtab c where c.cod = 1)
+		)
+);
+
+
+-- ********* CONSULTA *********
+-- Mostrar los datos de los articulos internos 
+-- (art, titulo, revista, vol, num, anio, nombre autores, nombre instituto, y 
+-- nombre virus de los que trata) financiados por el contrato 1
+
+
+SELECT art, titulo, revista, volumen, num, anio,
+CURSOR
+(
+	SELECT au.nombre
+	FROM   autor_objtab au, TABLE( a.autores ) t
+	WHERE  au.cod = t.COLUMN_VALUE
+), 
+a.producido_por.nombre
+,
+CURSOR
+(
+	SELECT nombre
+	FROM   virus_objtab v, TABLE( a.trata_sobre ) t1
+	WHERE  v.cod = t1.COLUMN_VALUE
+)
+FROM articulo_objtab a
+WHERE TREAT (VALUE(a) AS articulo_interno).contrato_ref.cod = 1;
+
+-- -----------------------------------------------------
+
+-- PARA EL JAVA:
+
+SELECT VALUE(p), DEREF( TREAT (VALUE(p) AS articulo_interno).contrato_ref )
+FROM articulo_objtab p
+WHERE TREAT (VALUE(p) AS articulo_interno).contrato_ref.cod = 1;
